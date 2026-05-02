@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    @apply bg-ink text-cream font-body m-0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { @apply bg-ink-soft; }
+  ::-webkit-scrollbar-thumb { @apply bg-ink-muted rounded-full; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-accent text-ink font-display font-semibold text-sm px-5 py-2.5
+           rounded-lg hover:bg-accent-hover transition-all duration-200 
+           active:scale-95 cursor-pointer;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-cream/60 font-body text-sm px-4 py-2
+           rounded-lg hover:bg-ink-soft hover:text-cream transition-all duration-200
+           cursor-pointer border border-transparent hover:border-ink-muted;
+  }
+
+  .card {
+    @apply bg-ink-soft border border-ink-muted rounded-2xl;
+  }
+
+  .input-field {
+    @apply bg-ink-muted border border-ink-muted/50 rounded-xl px-4 py-3
+           text-cream font-body text-sm placeholder-cream/30 outline-none
+           focus:border-accent/50 focus:ring-1 focus:ring-accent/20
+           transition-all duration-200 w-full;
+  }
+
+  .tag {
+    @apply inline-flex items-center gap-1.5 text-xs font-mono px-2.5 py-1
+           rounded-full border;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-body
+           font-medium transition-all duration-200 cursor-pointer;
+  }
+
+  .nav-item-active {
+    @apply bg-accent/10 text-accent border border-accent/20;
+  }
+
+  .nav-item-inactive {
+    @apply text-cream/50 hover:text-cream hover:bg-ink-muted;
+  }
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulseDot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.message-enter {
+  animation: fadeUp 0.35s ease forwards;
+}
+
+.badge-A { @apply bg-teal/10 text-teal border-teal/30; }
+.badge-B { @apply bg-accent/10 text-accent border-accent/30; }
+.badge-C { @apply bg-coral/10 text-coral border-coral/30; }
