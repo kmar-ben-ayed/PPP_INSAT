@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Quelles sont les dates d'inscription au TRYSP ?",
+    "reference_answer": "Les inscriptions sont ouvertes du 1er au 30 mars 2025.",
+    "category": "Inscription & participation"
+  },
+  {
+    "question": "Où se déroule l'événement TRYSP ?",
+    "reference_answer": "L'événement se déroule à l'INSAT, campus universitaire de Tunis.",
+    "category": "Logistique & hébergement"
+  },
+  {
+    "question": "Comment contacter le comité organisateur ?",
+    "reference_answer": "Par email : trysp@insat.tn ou via Instagram @trysp_insat.",
+    "category": "Contacts & organisation"
+  },
+  {
+    "question": "Quels sont les thèmes des panels cette année ?",
+    "reference_answer": "Les panels couvrent l'IA, l'entrepreneuriat, le développement durable et les carrières tech.",
+    "category": "Programme & sessions"
+  },
+  {
+    "question": "Y a-t-il des opportunités de networking ?",
+    "reference_answer": "Oui, des sessions de networking sont prévues avec des recruteurs partenaires.",
+    "category": "Opportunités professionnelles"
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "approche": "B - Ollama + Cloudflare",
+  "modele": "qwen2.5:1.5b",
+  "date": "2026-05-24 18:25:57",
+  "scenarios": [
+    {
+      "n_users": 1,
+      "total_time": 6.77,
+      "success_count": 1,
+      "failure_count": 0,
+      "success_rate": 100.0,
+      "latence_moyenne": 6.77,
+      "latence_mediane": 6.77,
+      "latence_max": 6.77,
+      "latence_min": 6.77
+    },
+    {
+      "n_users": 3,
+      "total_time": 6.44,
+      "success_count": 3,
+      "failure_count": 0,
+      "success_rate": 100.0,
+      "latence_moyenne": 6.2,
+      "latence_mediane": 6.22,
+      "latence_max": 6.44,
+      "latence_min": 5.93
+    },
+    {
+      "n_users": 5,
+      "total_time": 9.77,
+      "success_count": 5,
+      "failure_count": 0,
+      "success_rate": 100.0,
+      "latence_moyenne": 9.16,
+      "latence_mediane": 9.41,
+      "latence_max": 9.77,
+      "latence_min": 7.99
+    },
+    {
+      "n_users": 10,
+      "total_time": 15.19,
+      "success_count": 10,
+      "failure_count": 0,
+      "success_rate": 100.0,
+      "latence_moyenne": 14.09,
+      "latence_mediane": 14.11,
+      "latence_max": 15.18,
+      "latence_min": 12.29
+    }
+  ]
+}
