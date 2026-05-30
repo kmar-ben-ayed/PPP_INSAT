@@ -296,7 +296,22 @@ export function importContextJSON(file) {
 export const CATEGORIES = ['inscription', 'programme', 'logistique', 'opportunités', 'contacts']
 
 export const APPROACH_CONFIG = {
-  A: { label: 'Hugging Face Spaces', model: 'Phi-3 Mini / SmolLM2', color: 'teal', desc: 'CPU Cloud HF — zéro config serveur' },
-  B: { label: 'Ollama + Cloudflare', model: 'Qwen2.5-1.5B', color: 'accent', desc: 'Machine locale — contrôle total' },
-  C: { label: 'Serverless HF API', model: 'SmolLM2', color: 'coral', desc: 'REST API — setup en < 1h' },
-}
+  A: {
+    label: "Hugging Face Spaces",
+    model: "Phi-3 Mini / SmolLM2",
+    color: "teal",
+    desc: "CPU Cloud HF — zéro config serveur",
+  },
+  B: {
+    label: "Ollama + Cloudflare",
+    model: "Qwen2.5-1.5B",
+    color: "accent",
+    desc: "Machine locale — contrôle total",
+  },
+  C: {
+    label: "Serverless HF API",
+    model: "zephyr-7b-beta",
+    color: "coral",
+    desc: "REST API — setup en < 1h",
+  },
+};
