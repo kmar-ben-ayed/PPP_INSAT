@@ -3,7 +3,7 @@
 const BASE_URLS = {
   A: import.meta.env.VITE_API_A || '/api',   // Membre 1 — HF Spaces
   B: import.meta.env.VITE_API_B || '/api-b', // Membre 2 — Qwen + Ollama local
-  C: import.meta.env.VITE_API_C || '/api',   // Membre 3 — Serverless HF
+  C: import.meta.env.VITE_API_C || '/api-c',   // Membre 3 — Serverless HF
 }
 
 function getBase(approach) {
@@ -107,12 +107,17 @@ export async function getMetrics(approach) {
 }
 
 // POST /benchmark
-export async function runBenchmark({ approach, dataset }) {
+export async function runBenchmark({
+  approach,
+  dataset,
+  context,
+  consistency_runs = 2,
+}) {
   const res = await fetch(`${getBase(approach)}/benchmark`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dataset }),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dataset, context, approach, consistency_runs }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
