@@ -1,0 +1,9 @@
+{
+  "approche": "B - Ollama + Cloudflare",
+  "modele": "qwen2.5:1.5b",
+  "latence_moyenne": 5.19,
+  "latence_mediane": 4.2,
+  "latence_max": 8.46,
+  "bleu_moyen": 0.3492,
+  "rouge_l_moyen": 0.603
+}
