@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { Play, Upload, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { runBenchmark, getMetrics } from '../lib/api'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
-import { APPROACH_CONFIG } from '../lib/context'
+import { APPROACH_CONFIG, loadContext } from '../lib/context'
 
 const DEFAULT_DATASET = [
-  { question: "Quelles sont les dates limites d'inscription ?", 
-    reference_answer: "Les inscriptions sont ouvertes jusqu'au 15 mai 2025.", 
-    category: "inscription" 
+  {
+    question: "What are the dates of TRSYP 3.0?",
+    reference_answer: "17-18 October 2026.",
+    category: "program"
   },
-  { question: "Où se déroule l'événement ?", 
-    reference_answer: "L'événement se déroule à l'INSAT, Tunis.", 
-    category: "logistique" 
+  {
+    question: "Who organizes TRSYP 3.0?",
+    reference_answer: "TRSYP 3.0 is organized by the IEEE INSAT Student Branch in collaboration with the IEEE RAS Tunisia Section.",
+    category: "contacts"
   },
 ]
 
@@ -37,7 +39,7 @@ export default function BenchmarkPage({ approach }) {
     setError('')
     try {
       const [bench, met] = await Promise.all([
-        runBenchmark({ approach, dataset }),
+        runBenchmark({ approach, dataset, context: loadContext() }),
         getMetrics(approach),
       ])
       setResults(bench)
