@@ -1,9 +1,9 @@
 // All calls go through /api which Vite proxies to localhost:8000
 
 const BASE_URLS = {
-  A: import.meta.env.VITE_API_A || '/api',  // Membre 1 — HF Spaces
-  B: import.meta.env.VITE_API_B || '/api',  // Membre 2 — Ollama local
-  C: import.meta.env.VITE_API_C || '/api',  // Membre 3 — Serverless HF
+  A: import.meta.env.VITE_API_A || '/api',   // Membre 1 — HF Spaces
+  B: import.meta.env.VITE_API_B || '/api-b', // Membre 2 — Qwen + Ollama local
+  C: import.meta.env.VITE_API_C || '/api',   // Membre 3 — Serverless HF
 }
 
 function getBase(approach) {
@@ -58,18 +58,34 @@ export function buildPrompt(question, context, lang) {
 
 // POST /chat
 export async function sendChat({ question, context, model, approach, lang }) {
+  const t0 = Date.now()
+
+  // Approach B → Qwen backend (FastAPI) expects { question, context: string }
+  if (approach === 'B') {
+    const faqText = (context.faq || [])
+      .map(item => `Q: ${item.q || item.question}\nR: ${item.a || item.reference_answer}`)
+      .join('\n\n')
+
+    const res = await fetch(`${getBase('B')}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, context: faqText }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json() // { question, answer }
+    return { answer: data.answer, latency_ms: Date.now() - t0 }
+  }
+
+  // Approaches A & C — generic contract
+  const prompt = buildPrompt(question, context, lang)
   const res = await fetch(`${getBase(approach)}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
-      question, 
-      context: { ...context, prompt }, 
-      model, 
-      approach, 
-      lang }),
+    body: JSON.stringify({ question, context: { ...context, prompt }, model, approach, lang }),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json() // { answer, latency_ms }
+  const data = await res.json() // { answer, latency_ms }
+  return { ...data, latency_ms: data.latency_ms ?? Date.now() - t0 }
 }
 
 // GET /health

@@ -1,11 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 import gradio as gr
 import json
 import os
+import time
 
 app = FastAPI(title="Chatbot TRSYP (Approche B)")
+
+# Allow the Vite dev server (port 5173) and any Cloudflare tunnel origin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],          # tighten to your tunnel URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 def load_faq(path: str = "context/faq.json") -> str:
     if not os.path.exists(path):
         return "Aucun contexte FAQ chargé."
@@ -13,7 +25,10 @@ def load_faq(path: str = "context/faq.json") -> str:
         data = json.load(f)
     lines = []
     for item in data:
-        lines.append(f"Q: {item['question']}\nR: {item['reference_answer']}")
+        q = item.get('q') or item.get('question', '')
+        a = item.get('a') or item.get('reference_answer', '')
+        if q and a:
+            lines.append(f"Q: {q}\nR: {a}")
     return "\n\n".join(lines)
 
 FAQ_CONTEXT = load_faq()
@@ -46,6 +61,7 @@ CONTEXTE FAQ :
         "stream": False
     }
 
+    t0 = time.time()
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             "http://localhost:11434/api/chat",
@@ -53,9 +69,10 @@ CONTEXTE FAQ :
         )
         resp.raise_for_status()
         data = resp.json()
+    latency_ms = round((time.time() - t0) * 1000)
 
     answer = data["message"]["content"]
-    return {"question": req.question, "answer": answer}
+    return {"question": req.question, "answer": answer, "latency_ms": latency_ms}
 
 
 @app.get("/health")
