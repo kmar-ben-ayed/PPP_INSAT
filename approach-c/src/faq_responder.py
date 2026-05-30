@@ -12,7 +12,7 @@ from typing import Iterable
 
 import requests
 
-from config import HF_API_TOKEN, INFERENCE_TIMEOUT, LLM_MAX_NEW_TOKENS, LLM_TEMPERATURE
+from config import BACKUP_MODEL, DEFAULT_MODEL, HF_API_TOKEN, INFERENCE_TIMEOUT, LLM_MAX_NEW_TOKENS, LLM_TEMPERATURE
 from src.faq_context import FAQContext, FAQEntry
 
 logger = logging.getLogger(__name__)
@@ -246,8 +246,8 @@ def _call_approach_c(prompt: str, model: str) -> tuple[str, float]:
     """
     if not HF_API_TOKEN:
         raise RuntimeError("HF_API_TOKEN is not configured.")
-    effective_model = model if model else "HuggingFaceH4/zephyr-7b-beta"
-    url = "https://router.huggingface.co/v1/chat/completions"
+    effective_model = DEFAULT_MODEL if DEFAULT_MODEL else "llama-3.1-8b-instant"
+    url = "https://api.groq.com/openai/v1/chat/completions"    
     headers = {
         "Authorization": f"Bearer {HF_API_TOKEN}",
         "Content-Type": "application/json",

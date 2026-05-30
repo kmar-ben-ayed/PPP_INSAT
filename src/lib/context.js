@@ -310,7 +310,7 @@ export const APPROACH_CONFIG = {
   },
   C: {
     label: "Serverless HF API",
-    model: "zephyr-7b-beta",
+    model: "llama-3.1-8b-instant",
     color: "coral",
     desc: "REST API — setup en < 1h",
   },
