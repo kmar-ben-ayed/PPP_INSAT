@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { Play, Upload, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { runBenchmark, getMetrics } from '../lib/api'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
-import { APPROACH_CONFIG } from '../lib/context'
+import { APPROACH_CONFIG, loadContext } from '../lib/context'
 
 const DEFAULT_DATASET = [
-  { question: "Quelles sont les dates limites d'inscription ?", 
-    reference_answer: "Les inscriptions sont ouvertes jusqu'au 15 mai 2025.", 
-    category: "inscription" 
+  {
+    question: "What are the dates of TRSYP 3.0?",
+    reference_answer: "17-18 October 2026.",
+    category: "program"
   },
-  { question: "Où se déroule l'événement ?", 
-    reference_answer: "L'événement se déroule à l'INSAT, Tunis.", 
-    category: "logistique" 
+  {
+    question: "Who organizes TRSYP 3.0?",
+    reference_answer: "TRSYP 3.0 is organized by the IEEE INSAT Student Branch in collaboration with the IEEE RAS Tunisia Section.",
+    category: "contacts"
   },
 ]
 
@@ -37,7 +39,7 @@ export default function BenchmarkPage({ approach }) {
     setError('')
     try {
       const [bench, met] = await Promise.all([
-        runBenchmark({ approach, dataset }),
+        runBenchmark({ approach, dataset, context: loadContext() }),
         getMetrics(approach),
       ])
       setResults(bench)
@@ -71,9 +73,10 @@ export default function BenchmarkPage({ approach }) {
       ]
     : []
 
-  function MetricCard({ label, value, unit = '', good, warn }) {
-    const pct = typeof value === 'number' ? value : 0
-    const color = pct >= good ? 'text-teal' : pct >= warn ? 'text-accent' : 'text-coral'
+  function MetricCard({ label, value, unit = '', good, warn, lowerIsBetter = false }) {    const pct = typeof value === 'number' ? value : 0
+    const color = lowerIsBetter
+    ? (pct <= good ? 'text-teal' : pct <= warn ? 'text-accent' : 'text-coral')
+    : (pct >= good ? 'text-teal' : pct >= warn ? 'text-accent' : 'text-coral')
     return (
       <div className="card p-4">
         <p className="text-xs font-mono text-cream/30 mb-1">{label}</p>
@@ -144,6 +147,7 @@ export default function BenchmarkPage({ approach }) {
                 Qualité des réponses
               </h2>
               <div className="grid grid-cols-4 gap-3">
+                {/* Quality — higher is better, no change needed */}
                 <MetricCard label="BLEU" value={results.bleu} unit="%" good={0.5} warn={0.3} />
                 <MetricCard label="ROUGE-L" value={results.rouge_l} unit="%" good={0.5} warn={0.3} />
                 <MetricCard label="Pertinence contextuelle" value={results.contextual_relevance_rate} unit="%" good={0.8} warn={0.5} />
@@ -157,10 +161,11 @@ export default function BenchmarkPage({ approach }) {
                 Performance
               </h2>
               <div className="grid grid-cols-4 gap-3">
-                <MetricCard label="TTFT" value={results.ttft_ms} unit="ms" good={1000} warn={3000} />
-                <MetricCard label="Latence moy." value={results.avg_latency_ms} unit="ms" good={2000} warn={5000} />
+                {/* Performance — TTFT/Latence/Hallucination are lower=better */}
+                <MetricCard label="TTFT" value={results.ttft_ms} unit="ms" good={800} warn={3000} lowerIsBetter />
+                <MetricCard label="Latence moy." value={results.avg_latency_ms} unit="ms" good={1000} warn={5000} lowerIsBetter />
                 <MetricCard label="Throughput" value={results.throughput_tokens_per_sec} unit="tok/s" good={20} warn={10} />
-                <MetricCard label="Hallucination" value={results.hallucination_rate} unit="%" good={0.05} warn={0.15} />
+                <MetricCard label="Hallucination" value={results.hallucination_rate} unit="%" good={0.05} warn={0.15} lowerIsBetter />
               </div>
             </div>
 
@@ -198,11 +203,12 @@ export default function BenchmarkPage({ approach }) {
                   Fiabilité système
                 </h2>
                 <div className="grid grid-cols-5 gap-3">
-                  <MetricCard label="Uptime" value={metrics.uptime_percent} unit="%" good={99} warn={95} />
-                  <MetricCard label="Rate limit hits" value={metrics.rate_limit_hits} unit="" good={0} warn={5} />
-                  <MetricCard label="Cold start" value={metrics.cold_start_ms} unit="ms" good={5000} warn={30000} />
-                  <MetricCard label="Concurrence" value={metrics.concurrent_requests_handled} unit="" good={5} warn={2} />
-                  <MetricCard label="Coût total" value={metrics.cost_eur} unit="€" good={0} warn={0} />
+                  {/* Reliability */}
+                  <MetricCard label="Uptime" value={metrics.uptime_percent / 100} unit="%" good={0.99} warn={0.95} />
+                  <MetricCard label="Rate limit hits" value={metrics.rate_limit_hits} unit="" good={0} warn={5} lowerIsBetter />
+                  <MetricCard label="Cold start" value={metrics.cold_start_ms} unit="ms" good={5000} warn={30000} lowerIsBetter />
+                  <MetricCard label="Concurrence" value={metrics.concurrent_requests_handled} unit="" good={1} warn={1} />
+                  <MetricCard label="Coût total" value={metrics.cost_eur} unit="€" good={0} warn={0.5} lowerIsBetter />
                 </div>
               </div>
             )}
