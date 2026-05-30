@@ -3,19 +3,13 @@ import { Play, Upload, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { runBenchmark, getMetrics } from '../lib/api'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
 import { APPROACH_CONFIG, loadContext } from '../lib/context'
+import faqData from '../data/faq.json'
 
-const DEFAULT_DATASET = [
-  {
-    question: "What are the dates of TRSYP 3.0?",
-    reference_answer: "17-18 October 2026.",
-    category: "program"
-  },
-  {
-    question: "Who organizes TRSYP 3.0?",
-    reference_answer: "TRSYP 3.0 is organized by the IEEE INSAT Student Branch in collaboration with the IEEE RAS Tunisia Section.",
-    category: "contacts"
-  },
-]
+const DEFAULT_DATASET = faqData.slice(0, 10).map(e => ({
+  question: e.q,
+  reference_answer: e.a,
+  category: e.category || 'general'
+}))
 
 const METRIC_LABELS = {
   bleu: 'BLEU',
@@ -39,7 +33,7 @@ export default function BenchmarkPage({ approach }) {
     setError('')
     try {
       const [bench, met] = await Promise.all([
-        runBenchmark({ approach, dataset, context: loadContext() }),
+        runBenchmark({ approach, dataset, context: loadContext(), consistency_runs: 1 }),
         getMetrics(approach),
       ])
       setResults(bench)

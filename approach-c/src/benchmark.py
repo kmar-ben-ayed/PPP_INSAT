@@ -63,7 +63,7 @@ def compute_benchmark_metrics(
     chat_fn: Callable[[str], AnswerResult],
     dataset: list[dict[str, str]],
     faq_context: FAQContext | None = None,
-    delay_seconds: float = 0.0,
+    delay_seconds: float = 1.5,
     consistency_runs: int = 1,
 ) -> dict[str, object]:
     """Evaluate a dataset and return metrics plus sample results."""

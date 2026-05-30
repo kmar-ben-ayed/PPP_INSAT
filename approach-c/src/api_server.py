@@ -527,7 +527,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 chat_fn=answer_fn,
                 dataset=normalized_dataset,
                 faq_context=faq_context,
-                delay_seconds=0.0,
+                delay_seconds=4.0,
                 consistency_runs=consistency_runs,
             )
 

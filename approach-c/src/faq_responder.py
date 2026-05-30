@@ -183,6 +183,7 @@ def build_prompt(question: str, context: FAQContext, lang: str) -> str:
         f"You are a helpful assistant for {context.club_name}.\n"
         f"Answer ONLY using the FAQ below. If the question is not covered, reply exactly: "
         f"{out_of_scope_message(lang)}\n"
+        f"Answer using the EXACT wording from the FAQ when possible. Do not paraphrase.\n"
         f"If the question contains multiple sub-questions, answer each one in a single merged response using only FAQ content.\n"
         f"{lang_instruction}\n\n"
         f"FAQ:\n{faq_lines}\n\n"
