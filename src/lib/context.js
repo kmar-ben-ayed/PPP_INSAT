@@ -300,18 +300,18 @@ export const APPROACH_CONFIG = {
     label: "Hugging Face Spaces",
     model: "Phi-3 Mini / SmolLM2",
     color: "teal",
-    desc: "CPU Cloud HF — zéro config serveur",
+    desc: "CPU Cloud HF · zéro config serveur",
   },
   B: {
     label: "Ollama + Cloudflare",
     model: "Qwen2.5-1.5B",
     color: "accent",
-    desc: "Machine locale — contrôle total",
+    desc: "Machine locale · contrôle total",
   },
   C: {
     label: "Serverless HF API",
     model: "llama-3.1-8b-instant",
     color: "coral",
-    desc: "REST API — setup en < 1h",
+    desc: "REST API · setup en < 1h",
   },
 };

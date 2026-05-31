@@ -1,182 +1,147 @@
 import { useState } from 'react'
-import { Plus, Trash2, Download, Upload, Save, RefreshCw, Pencil, Check, X  } from 'lucide-react'
+import { Plus, Trash2, Download, Upload, Save, RefreshCw, Pencil, Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { saveContext, exportContextJSON, importContextJSON, resetContext } from '../lib/context'
+import { t } from '../lib/i18n'
+
+const PAGE_SIZE = 5
+
+function CategoryBadge({ value }) {
+  if (!value) return null
+  const colors = [
+    { bg: 'var(--indigo-lt)', color: 'var(--indigo)', border: 'rgba(61,82,160,0.2)' },
+    { bg: 'var(--teal-lt)', color: 'var(--teal)', border: 'rgba(42,157,143,0.2)' },
+    { bg: 'var(--amber-lt)', color: 'var(--amber)', border: 'rgba(232,146,90,0.25)' },
+  ]
+  const idx = value.charCodeAt(0) % 3
+  const c = colors[idx]
+  return (
+    <span style={{ ...c, border: `1px solid ${c.border}`, fontSize: 11, fontFamily: 'JetBrains Mono, monospace', padding: '2px 9px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+      {value}
+    </span>
+  )
+}
 
 function EditableCell({ value, onChange, multiline = false, placeholder = '' }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
 
-  function commit() {
-    onChange(draft)
-    setEditing(false)
-  }
+  function commit() { onChange(draft); setEditing(false) }
+  function cancel() { setDraft(value); setEditing(false) }
 
-  function cancel() {
-    setDraft(value)
-    setEditing(false)
-  }
-
-  if (!editing) {
-    return (
-      <div
-        onClick={() => { setDraft(value); setEditing(true) }}
-        className="group flex items-start gap-2 cursor-pointer min-h-[32px] rounded-lg px-2 py-1.5
-                   hover:bg-ink-muted transition-colors"
-      >
-        <span className={`flex-1 text-sm font-body leading-relaxed ${value ? 'text-cream/80' : 'text-cream/20 italic'}`}>
-          {value || placeholder}
-        </span>
-        <Pencil size={12} className="text-cream/0 group-hover:text-cream/30 mt-0.5 shrink-0 transition-colors" />
-      </div>
-    )
-  }
+  if (!editing) return (
+    <div
+      onClick={() => { setDraft(value); setEditing(true) }}
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 6, cursor: 'text', minHeight: 32, padding: '4px 6px', borderRadius: 6, transition: 'background 0.12s' }}
+      onMouseEnter={e => e.currentTarget.style.background = '#F0F1F9'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <span style={{ flex: 1, fontSize: 13, lineHeight: 1.55, color: value ? 'var(--text)' : 'var(--text-3)', fontStyle: value ? 'normal' : 'italic' }}>
+        {value || placeholder}
+      </span>
+      <Pencil size={11} style={{ color: 'var(--text-3)', marginTop: 3, flexShrink: 0 }} />
+    </div>
+  )
 
   return (
-    <div className="flex items-start gap-1.5">
-      {multiline ? (
-        <textarea
-          autoFocus
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Escape') cancel() }}
-          className="input-field resize-none text-sm flex-1 min-h-[72px]"
-          rows={3}
-        />
-      ) : (
-        <input
-          autoFocus
-          type="text"
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel() }}
-          className="input-field text-sm flex-1 py-1.5"
-          placeholder={placeholder}
-        />
-      )}
-      <div className="flex flex-col gap-1 mt-0.5">
-        <button onClick={commit} className="p-1.5 rounded-lg bg-teal/10 text-teal hover:bg-teal/20 transition-colors">
-          <Check size={12} />
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+      {multiline
+        ? <textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === 'Escape' && cancel()}
+            className="input-field" rows={3} style={{ resize: 'none', fontSize: 13, flex: 1 }} />
+        : <input autoFocus type="text" value={draft} onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel() }}
+            className="input-field" placeholder={placeholder} style={{ fontSize: 13, flex: 1 }} />
+      }
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 1 }}>
+        <button onClick={commit} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--indigo)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Check size={12} color="#fff" />
         </button>
-        <button onClick={cancel} className="p-1.5 rounded-lg bg-ink-muted text-cream/30 hover:text-cream/60 transition-colors">
-          <X size={12} />
+        <button onClick={cancel} style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--bg)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <X size={12} color="var(--text-2)" />
         </button>
       </div>
     </div>
   )
 }
 
-export default function AdminPage({ context, setContext }) {
+export default function AdminPage({ context, setContext, lang }) {
   const [saved, setSaved] = useState(false)
   const [importError, setImportError] = useState('')
-
-  function handleSave() {
-    saveContext(context)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
-  function handleClubName(e) {
-    setContext(c => ({ ...c, club_name: e.target.value }))
-  }
-
-  function handleLang(e) {
-    setContext(c => ({ ...c, lang: e.target.value }))
-  }
-
-  function handleAddRow() {
-    setContext(c => ({
-      ...c,
-      faq: [...(c.faq || []), { q: '', a: '', category: '' }]
-    }))
-  }
-
-  function handleChangeCell(index, field, value) {
-    setContext(c => {
-      const faq = [...c.faq]
-      faq[index] = { ...faq[index], [field]: value }
-      return { ...c, faq }
-    })
-  }
-
-  function handleDeleteRow(index) {
-    setContext(c => ({ ...c, faq: c.faq.filter((_, i) => i !== index) }))
-  }
-
-  async function handleImport(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      const parsed = await importContextJSON(file)
-      setContext(parsed)
-      saveContext(parsed)
-      setImportError('')
-    } catch (err) {
-      setImportError(err.message)
-    }
-    e.target.value = ''
-  }
-
-  function handleReset() {
-    if (!confirm('Réinitialiser le contexte avec les données TRYSP par défaut ?')) return
-    const def = resetContext()
-    setContext(def)
-  }
+  const [currentPage, setCurrentPage] = useState(1)
 
   const faq = context.faq || []
+  const totalPages = Math.max(1, Math.ceil(faq.length / PAGE_SIZE))
+  const pageFaq = faq.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  function handleSave() { saveContext(context); setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  function handleAddRow() {
+    setContext(c => ({ ...c, faq: [...(c.faq || []), { q: '', a: '', category: '' }] }))
+    setCurrentPage(Math.ceil((faq.length + 1) / PAGE_SIZE))
+  }
+  function handleChangeCell(globalIdx, field, value) {
+    setContext(c => { const f = [...c.faq]; f[globalIdx] = { ...f[globalIdx], [field]: value }; return { ...c, faq: f } })
+  }
+  function handleDeleteRow(globalIdx) {
+    setContext(c => ({ ...c, faq: c.faq.filter((_, i) => i !== globalIdx) }))
+    if (pageFaq.length === 1 && currentPage > 1) setCurrentPage(p => p - 1)
+  }
+  async function handleImport(e) {
+    const file = e.target.files?.[0]; if (!file) return
+    try { const parsed = await importContextJSON(file); setContext(parsed); saveContext(parsed); setImportError(''); setCurrentPage(1) }
+    catch (err) { setImportError(err.message) }
+    e.target.value = ''
+  }
+  function handleReset() {
+    if (!confirm(t('admin.reset_confirm', lang))) return
+    const def = resetContext(); setContext(def); setCurrentPage(1)
+  }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)' }}>
+
       {/* Header */}
-      <div className="px-8 py-5 border-b border-ink-muted flex items-center justify-between shrink-0">
+      <div style={{ padding: '22px 32px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: '#fff' }}>
         <div>
-          <h1 className="font-display font-bold text-xl text-cream">Admin FAQ</h1>
+          <h1 className="font-display font-bold text-xl" style={{ fontSize: 24, margin: 0, lineHeight: 1 }}>{t('admin.title', lang)}</h1>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-3)', margin: '5px 0 0' }}>
+            {faq.length} {faq.length !== 1 ? t('admin.entries_plural', lang) : t('admin.entries', lang)} · {t('admin.page',lang)} {currentPage}/{totalPages}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="btn-ghost flex items-center gap-1.5 cursor-pointer">
-            <Upload size={14} />
-            Importer JSON
-            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label className="btn-ghost" style={{ cursor: 'pointer' }}>
+            <Upload size={14} /> {t('admin.import', lang)}
+            <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
           </label>
-          <button onClick={() => exportContextJSON(context)} className="btn-ghost flex items-center gap-1.5">
-            <Download size={14} />
-            Exporter
-          </button>
-          <button onClick={handleReset} className="btn-ghost flex items-center gap-1.5">
+          <button onClick={() => exportContextJSON(context)} className="btn-ghost"><Download size={14} /> {t('admin.export', lang)}</button>
+          <button onClick={handleReset} className="btn-ghost">
             <RefreshCw size={14} />
-            Reset
-          </button>
-          <button onClick={handleSave} className="btn-primary flex items-center gap-2">
-            <Save size={14} />
-            {saved ? 'Sauvegarde terminée' : 'Sauvegarder'}
+            </button>
+          <button onClick={handleSave} className="btn-primary">
+            <Save size={14} /> {saved ? t('admin.saved', lang) : t('admin.save', lang)}
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {importError && (
-          <div className="bg-coral/10 border border-coral/30 rounded-xl px-4 py-3 text-coral text-sm">
+          <div style={{ background: 'var(--coral-lt)', border: '1px solid #F5BABA', borderRadius: 8, padding: '10px 16px', color: 'var(--coral)', fontSize: 13 }}>
             {importError}
           </div>
         )}
 
-        {/* Club config */}
-        <div className="card p-5">
-          <h2 className="font-display font-semibold text-sm text-cream/70 uppercase tracking-wider mb-4">
-            Configuration du club
-          </h2>
-          <div className="grid grid-cols-2 gap-4">
+        {/* Config card */}
+        <div className="card" style={{ padding: '15px 24px' }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>
+            {t('admin.config_title', lang)}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label className="text-xs font-mono text-cream/40 mb-1.5 block">Nom du club</label>
-              <input
-                value={context.club_name || ''}
-                onChange={handleClubName}
-                className="input-field"
-                placeholder="ex: TRYSP, IEEE INSAT…"
-              />
+              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>{t('admin.club_name_label', lang)}</label>
+              <input value={context.club_name || ''} onChange={e => setContext(c => ({ ...c, club_name: e.target.value }))}
+                className="input-field" placeholder="ex: IEEE INSAT, TRYSP…" />
             </div>
             <div>
-              <label className="text-xs font-mono text-cream/40 mb-1.5 block">Langue par défaut</label>
-              <select value={context.lang || 'fr'} onChange={handleLang} className="input-field">
+              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>{t('admin.lang_label', lang)}</label>
+              <select value={context.lang || 'fr'} onChange={e => setContext(c => ({ ...c, lang: e.target.value }))} className="input-field">
                 <option value="fr">Français</option>
                 <option value="en">English</option>
               </select>
@@ -184,87 +149,130 @@ export default function AdminPage({ context, setContext }) {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="card overflow-hidden">
-          {/* Table header */}
-          <div className="grid grid-cols-[2rem_1fr_1.4fr_10rem_2.5rem] gap-0 border-b border-ink-muted">
-            <div className="px-4 py-3 text-xs font-mono text-cream/30">#</div>
-            <div className="px-4 py-3 text-xs font-mono text-cream/40 uppercase tracking-wider border-l border-ink-muted">Question</div>
-            <div className="px-4 py-3 text-xs font-mono text-cream/40 uppercase tracking-wider border-l border-ink-muted">Reponse</div>
-            <div className="px-4 py-3 text-xs font-mono text-cream/40 uppercase tracking-wider border-l border-ink-muted">Categorie</div>
-            <div className="px-4 py-3 border-l border-ink-muted" />
+        {/* Table card */}
+        <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* Header row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 1.4fr 140px 44px', background: 'var(--indigo-lt)', borderBottom: '1px solid rgba(61,82,160,0.15)' }}>
+            {[t('admin.col_index', lang), t('admin.col_question', lang), t('admin.col_answer', lang), t('admin.col_category', lang), ''].map((h, i) => (
+              <div key={i} style={{ padding: '10px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--indigo)', textTransform: 'uppercase', letterSpacing: '0.07em', borderLeft: i > 0 ? '1px solid rgba(61,82,160,0.12)' : 'none' }}>
+                {h}
+              </div>
+            ))}
           </div>
-        
-          {/* Rows */}
-          {faq.length === 0 ? (
-            <div className="py-16 text-center text-cream/20 text-sm font-body">
-              Aucune entree. Cliquez sur "Ajouter une ligne".
-            </div>
-          ) : (
-            faq.map((item, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-[2rem_1fr_1.4fr_10rem_2.5rem] gap-0 border-b border-ink-muted/40
-              last:border-0 hover:bg-ink-muted/10 transition-colors group"
-            >
-              {/* Index */}
-              <div className="px-3 py-3 flex items-start pt-4">
-                <span className="font-mono text-xs text-cream/20">{i + 1}</span>
+
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {pageFaq.length === 0 ? (
+              <div style={{ padding: '56px 0', textAlign: 'center' }}>
+                <p style={{ color: 'var(--text-3)', fontSize: 14, margin: 0 }}>{t('admin.empty', lang)}</p>
+                <p style={{ color: 'var(--text-3)', fontSize: 12, margin: '6px 0 0' }}>{t('admin.empty_sub', lang)}</p>
               </div>
-          
-              {/* Question */}
-              <div className="px-3 py-2 border-l border-ink-muted/40">
-                <EditableCell
-                  value={item.q}
-                  onChange={v => handleChangeCell(i, 'q', v)}
-                  multiline
-                  placeholder="Ecrire la question..."
-                />
-              </div>
-          
-              {/* Reponse */}
-              <div className="px-3 py-2 border-l border-ink-muted/40">
-              <EditableCell
-                value={item.a}
-                onChange={v => handleChangeCell(i, 'a', v)}
-                multiline
-                placeholder="Ecrire la reponse..."
-              />
-              </div>
-          
-              {/* Category */}
-              <div className="px-3 py-2 border-l border-ink-muted/40">
-              <EditableCell
-                value={item.category}
-                onChange={v => handleChangeCell(i, 'category', v)}
-                placeholder="inscription..."
-              />
-              </div>
-          
-              {/* Delete */}
-              <div className="px-2 py-3 border-l border-ink-muted/40 flex items-start justify-center pt-4">
-                <button
-                onClick={() => handleDeleteRow(i)}
-                  className="p-1.5 rounded-lg text-cream/0 group-hover:text-cream/20
-                  hover:!text-coral hover:bg-coral/10 transition-all"
+            ) : pageFaq.map((item, localIdx) => {
+              const globalIdx = (currentPage - 1) * PAGE_SIZE + localIdx
+              return (
+                <div
+                  key={globalIdx}
+                  style={{
+                    display: 'grid', gridTemplateColumns: '44px 1fr 1.4fr 140px 44px',
+                    borderBottom: localIdx < pageFaq.length - 1 ? '1px solid var(--border)' : 'none',
+                    background: localIdx % 2 === 0 ? '#fff' : '#FAFAF9',
+                    transition: 'background 0.12s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F2F3FB'}
+                  onMouseLeave={e => e.currentTarget.style.background = localIdx % 2 === 0 ? '#fff' : '#FAFAF9'}
                 >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            </div>
-            ))
-          )}
-        
-          {/* Add row */}
-          <div className="px-4 py-3 border-t border-ink-muted/40">
+                  <div style={{ padding: '14px 10px 14px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-3)' }}>
+                    {globalIdx + 1}
+                  </div>
+                  <div style={{ padding: '8px 12px', borderLeft: '1px solid var(--border)' }}>
+                    <EditableCell value={item.q} onChange={v => handleChangeCell(globalIdx, 'q', v)} multiline placeholder={t('admin.placeholder_q', lang)} />
+                  </div>
+                  <div style={{ padding: '8px 12px', borderLeft: '1px solid var(--border)' }}>
+                    <EditableCell value={item.a} onChange={v => handleChangeCell(globalIdx, 'a', v)} multiline placeholder={t('admin.placeholder_a', lang)} />
+                  </div>
+                  <div style={{ padding: '10px 12px', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', paddingTop: 13 }}>
+                    {item.category
+                      ? <CategoryBadge value={item.category} />
+                      : <EditableCell value={item.category} onChange={v => handleChangeCell(globalIdx, 'category', v)} placeholder={t('admin.placeholder_cat', lang)} />
+                    }
+                  </div>
+                  <div style={{ borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 13 }}>
+                    <button
+                      onClick={() => handleDeleteRow(globalIdx)}
+                      style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--coral-lt)'; e.currentTarget.style.color = 'var(--coral)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-3)' }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Footer: add + pagination */}
+          <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', background: 'var(--bg)', flexShrink: 0 }}>
             <button
               onClick={handleAddRow}
-              className="flex items-center gap-2 text-sm text-cream/30 hover:text-accent
-              font-body transition-colors"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--indigo)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, fontFamily: 'Plus Jakarta Sans, sans-serif', padding: '4px 6px', borderRadius: 6, transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--indigo-lt)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <Plus size={14} />
-                Ajouter une ligne
+              <Plus size={14} /> {t('admin.add_row', lang)}
             </button>
+
+            {/* Pagination */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-3)' }}>
+                {pageFaq.length} / {PAGE_SIZE} visibles
+              </span>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid var(--border)', background: '#fff', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: currentPage === 1 ? 'var(--text-3)' : 'var(--text)' }}
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+        .reduce((acc, p, idx, arr) => {
+          if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...')
+          acc.push(p)
+          return acc
+        }, [])
+        .map((p, i) =>
+          p === '...'
+            ? <span key={`ellipsis-${i}`} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--text-3)', padding: '0 2px' }}>…</span>
+            : <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                style={{
+                  width: 30, height: 30, borderRadius: 7, border: '1px solid',
+                  borderColor: p === currentPage ? 'var(--indigo)' : 'var(--border)',
+                  background: p === currentPage ? 'var(--indigo)' : '#fff',
+                  color: p === currentPage ? '#fff' : 'var(--text-2)',
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 12,
+                  cursor: 'pointer', fontWeight: 500, transition: 'all 0.15s',
+                }}
+              >
+                {p}
+              </button>
+        )
+      }
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid var(--border)', background: '#fff', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: currentPage === totalPages ? 'var(--text-3)' : 'var(--text)' }}
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
