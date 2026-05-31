@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Languages, AlertCircle, Sparkles } from 'lucide-react'
 import { sendChat } from '../lib/api'
 import { APPROACH_CONFIG } from '../lib/context'
+import { t } from '../lib/i18n'
+
 
 function TypingIndicator() {
   return (
@@ -68,17 +70,25 @@ function Message({ msg, approach }) {
   )
 }
 
-export default function ChatPage({ approach, context }) {
+export default function ChatPage({ approach, context, lang, setLang }) {
   const [messages, setMessages] = useState([{
     id: 0, role: 'bot',
-    content: `Bonjour et bienvenue ! 👋 Je suis le chatbot de ${context.club_name || 'notre club'}. Posez-moi vos questions en français ou en anglais — je suis là pour vous aider !`,
+    content: t('chat.welcome', lang, { club: context.club_name || 'notre club' }),
   }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [lang, setLang] = useState(context.lang || 'fr')
   const bottomRef = useRef(null)
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length !== 1 || prev[0]?.role !== 'bot' || prev[0]?.id !== 0) return prev
+      return [{
+        ...prev[0],
+        content: t('chat.welcome', lang, { club: context.club_name || 'notre club' }),
+      }]
+    })
+  }, [lang, context.club_name])
   useEffect(() => {
     if (!input) return
     const frWords = ['comment', 'quand', 'où', 'est-ce', 'puis-je', 'les', 'des', 'une', 'pour', 'quel']
@@ -94,7 +104,7 @@ export default function ChatPage({ approach, context }) {
       const data = await sendChat({ question: q, context, model: APPROACH_CONFIG[approach].model, approach, lang })
       setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', content: data.answer, latency_ms: data.latency_ms }])
     } catch (err) {
-      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', content: 'Une erreur est survenue. Veuillez vérifier que le backend est actif.', error: err.message }])
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', content: t('chat.error', lang), error: err.message }])
     } finally { setLoading(false) }
   }
 
@@ -122,7 +132,7 @@ export default function ChatPage({ approach, context }) {
               {context.club_name || 'Club FAQ'}
             </h1>
             <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-3)', margin: '4px 0 0' }}>
-              {context.faq?.length || 0} entrées · Approche <strong style={{ color: 'var(--indigo)' }}>{approach}</strong> active
+              {context.faq?.length || 0} {t('chat.entries', lang)} · {t('chat.approach_active', lang).replace('{{approach}}', approach)}
             </p>
           </div>
         </div>
@@ -145,7 +155,7 @@ export default function ChatPage({ approach, context }) {
       {messages.length === 1 && context.faq?.length > 0 && (
         <div style={{ padding: '0 32px 14px', maxWidth: 860, width: '100%', margin: '0 auto', alignSelf: 'stretch' }}>
           <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--text-3)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Questions suggérées
+            {t('chat.suggestions_label', lang)}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
             {context.faq.slice(0, 4).map((item, i) => (
@@ -166,8 +176,7 @@ export default function ChatPage({ approach, context }) {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', background: '#fff', borderRadius: 14, border: '1px solid var(--border)', padding: '8px 8px 8px 16px', boxShadow: '0 4px 16px rgba(0,0,0,0.07)' }}>
           <textarea value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder={lang === 'fr' ? 'Posez votre question…' : 'Ask your question…'}
-            rows={1}
+            placeholder={t('chat.placeholder', lang)}            rows={1}
             style={{ flex: 1, resize: 'none', border: 'none', outline: 'none', background: 'transparent', fontSize: 14, fontFamily: 'Plus Jakarta Sans, sans-serif', color: 'var(--text)', lineHeight: 1.5, minHeight: 28, maxHeight: 120, paddingTop: 4 }}
             onInput={e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
           />

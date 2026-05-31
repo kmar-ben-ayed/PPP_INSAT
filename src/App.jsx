@@ -11,6 +11,8 @@ export default function App() {
   const [approach, setApproach] = useState('A')
   const [context, setContext] = useState(loadContext)
   const [health, setHealth] = useState({ A: {}, B: {}, C: {} })
+  const [lang, setLang] = useState(context.lang || 'fr')
+
 
   // Poll health for all 3 approaches every 30s
   useEffect(() => {
@@ -28,9 +30,9 @@ export default function App() {
   }, [])
 
   const pages = {
-    chat:      <ChatPage approach={approach} context={context} />,
-    admin:     <AdminPage context={context} setContext={setContext} />,
-    benchmark: <BenchmarkPage approach={approach} />,
+    chat:      <ChatPage approach={approach} context={context} lang={lang} setLang={setLang} />,
+    admin:     <AdminPage context={context} setContext={setContext} lang={lang} />,
+    benchmark: <BenchmarkPage approach={approach} lang={lang} />,
   }
 
   return (
@@ -41,6 +43,7 @@ export default function App() {
         approach={approach}
         setApproach={setApproach}
         health={health}
+        lang={lang}
       />
       <main className="flex-1 overflow-hidden">
         {pages[page]}

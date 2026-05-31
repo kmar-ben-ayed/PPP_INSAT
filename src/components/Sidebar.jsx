@@ -1,13 +1,15 @@
 import { MessageSquare, Settings, BarChart3 } from 'lucide-react'
 import { APPROACH_CONFIG } from '../lib/context'
+import { t } from '../lib/i18n'
+
 
 const NAV = [
-  { id: 'chat',      icon: MessageSquare, label: 'Chat' },
-  { id: 'admin',     icon: Settings,      label: 'Admin FAQ' },
-  { id: 'benchmark', icon: BarChart3,     label: 'Benchmark' },
+  { id: 'chat',      icon: MessageSquare,labelKey: 'sidebar.nav_chat' },
+  { id: 'admin',     icon: Settings,     labelKey: 'sidebar.nav_admin' },
+  { id: 'benchmark', icon: BarChart3,     labelKey: 'sidebar.nav_benchmark' },
 ]
 
-export default function Sidebar({ page, setPage, approach, setApproach, health }) {
+export default function Sidebar({ page, setPage, approach, setApproach, health, lang  }) {
   return (
     <aside style={{
       width: 236, flexShrink: 0,
@@ -36,7 +38,7 @@ export default function Sidebar({ page, setPage, approach, setApproach, health }
           Club IEEE INSAT
         </p>
         <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--text-3)', margin: 0, lineHeight: 1.4 }}>
-          ✦ Bienvenue dans votre espace FAQ
+          {t('sidebar.slogan', lang)}
         </p>
         </div>
           </div>
@@ -45,14 +47,14 @@ export default function Sidebar({ page, setPage, approach, setApproach, health }
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {NAV.map(({ id, icon: Icon, label }) => (
+        {NAV.map(({ id, icon: Icon, labelKey }) => (
           <button
             key={id}
             onClick={() => setPage(id)}
             className={`nav-item ${page === id ? 'nav-item-active' : 'nav-item-inactive'}`}
           >
             <Icon size={16} />
-            {label}
+            {t(labelKey, lang)}
           </button>
         ))}
       </nav>
@@ -60,7 +62,7 @@ export default function Sidebar({ page, setPage, approach, setApproach, health }
       {/* Approach selector */}
       <div style={{ padding: '12px 10px 22px', borderTop: '1px solid var(--border)' }}>
         <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.09em', margin: '0 4px 10px' }}>
-          Approche active
+          {t('sidebar.approach_label', lang)}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {Object.entries(APPROACH_CONFIG).map(([key, cfg]) => {

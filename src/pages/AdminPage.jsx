@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Trash2, Download, Upload, Save, RefreshCw, Pencil, Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { saveContext, exportContextJSON, importContextJSON, resetContext } from '../lib/context'
+import { t } from '../lib/i18n'
 
 const PAGE_SIZE = 5
 
@@ -62,7 +63,7 @@ function EditableCell({ value, onChange, multiline = false, placeholder = '' }) 
   )
 }
 
-export default function AdminPage({ context, setContext }) {
+export default function AdminPage({ context, setContext, lang }) {
   const [saved, setSaved] = useState(false)
   const [importError, setImportError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -90,7 +91,7 @@ export default function AdminPage({ context, setContext }) {
     e.target.value = ''
   }
   function handleReset() {
-    if (!confirm('Réinitialiser ?')) return
+    if (!confirm(t('admin.reset_confirm', lang))) return
     const def = resetContext(); setContext(def); setCurrentPage(1)
   }
 
@@ -100,20 +101,22 @@ export default function AdminPage({ context, setContext }) {
       {/* Header */}
       <div style={{ padding: '22px 32px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: '#fff' }}>
         <div>
-          <h1 className="font-display font-bold text-xl" style={{ fontSize: 24, margin: 0, lineHeight: 1 }}>Gestion de la FAQ</h1>
+          <h1 className="font-display font-bold text-xl" style={{ fontSize: 24, margin: 0, lineHeight: 1 }}>{t('admin.title', lang)}</h1>
           <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--text-3)', margin: '5px 0 0' }}>
-            {faq.length} entrée{faq.length !== 1 ? 's' : ''} · Page {currentPage}/{totalPages}
+            {faq.length} {faq.length !== 1 ? t('admin.entries_plural', lang) : t('admin.entries', lang)} · {t('admin.page',lang)} {currentPage}/{totalPages}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <label className="btn-ghost" style={{ cursor: 'pointer' }}>
-            <Upload size={14} /> Importer
+            <Upload size={14} /> {t('admin.import', lang)}
             <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
           </label>
-          <button onClick={() => exportContextJSON(context)} className="btn-ghost"><Download size={14} /> Exporter</button>
-          <button onClick={handleReset} className="btn-ghost"><RefreshCw size={14} /></button>
+          <button onClick={() => exportContextJSON(context)} className="btn-ghost"><Download size={14} /> {t('admin.export', lang)}</button>
+          <button onClick={handleReset} className="btn-ghost">
+            <RefreshCw size={14} />
+            </button>
           <button onClick={handleSave} className="btn-primary">
-            <Save size={14} /> {saved ? '✓ Sauvegardé' : 'Sauvegarder'}
+            <Save size={14} /> {saved ? t('admin.saved', lang) : t('admin.save', lang)}
           </button>
         </div>
       </div>
@@ -128,16 +131,16 @@ export default function AdminPage({ context, setContext }) {
         {/* Config card */}
         <div className="card" style={{ padding: '15px 24px' }}>
           <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px' }}>
-            Configuration du club
+            {t('admin.config_title', lang)}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>Nom du club</label>
+              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>{t('admin.club_name_label', lang)}</label>
               <input value={context.club_name || ''} onChange={e => setContext(c => ({ ...c, club_name: e.target.value }))}
                 className="input-field" placeholder="ex: IEEE INSAT, TRYSP…" />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>Langue par défaut</label>
+              <label style={{ fontSize: 12, color: 'var(--text-2)', display: 'block', marginBottom: 3, fontWeight: 500 }}>{t('admin.lang_label', lang)}</label>
               <select value={context.lang || 'fr'} onChange={e => setContext(c => ({ ...c, lang: e.target.value }))} className="input-field">
                 <option value="fr">Français</option>
                 <option value="en">English</option>
@@ -150,7 +153,7 @@ export default function AdminPage({ context, setContext }) {
         <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* Header row */}
           <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 1.4fr 140px 44px', background: 'var(--indigo-lt)', borderBottom: '1px solid rgba(61,82,160,0.15)' }}>
-            {['#', 'Question', 'Réponse', 'Catégorie', ''].map((h, i) => (
+            {[t('admin.col_index', lang), t('admin.col_question', lang), t('admin.col_answer', lang), t('admin.col_category', lang), ''].map((h, i) => (
               <div key={i} style={{ padding: '10px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--indigo)', textTransform: 'uppercase', letterSpacing: '0.07em', borderLeft: i > 0 ? '1px solid rgba(61,82,160,0.12)' : 'none' }}>
                 {h}
               </div>
@@ -160,8 +163,8 @@ export default function AdminPage({ context, setContext }) {
           <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             {pageFaq.length === 0 ? (
               <div style={{ padding: '56px 0', textAlign: 'center' }}>
-                <p style={{ color: 'var(--text-3)', fontSize: 14, margin: 0 }}>Aucune entrée.</p>
-                <p style={{ color: 'var(--text-3)', fontSize: 12, margin: '6px 0 0' }}>Cliquez sur « Ajouter une ligne » pour commencer.</p>
+                <p style={{ color: 'var(--text-3)', fontSize: 14, margin: 0 }}>{t('admin.empty', lang)}</p>
+                <p style={{ color: 'var(--text-3)', fontSize: 12, margin: '6px 0 0' }}>{t('admin.empty_sub', lang)}</p>
               </div>
             ) : pageFaq.map((item, localIdx) => {
               const globalIdx = (currentPage - 1) * PAGE_SIZE + localIdx
@@ -181,15 +184,15 @@ export default function AdminPage({ context, setContext }) {
                     {globalIdx + 1}
                   </div>
                   <div style={{ padding: '8px 12px', borderLeft: '1px solid var(--border)' }}>
-                    <EditableCell value={item.q} onChange={v => handleChangeCell(globalIdx, 'q', v)} multiline placeholder="Saisissez la question…" />
+                    <EditableCell value={item.q} onChange={v => handleChangeCell(globalIdx, 'q', v)} multiline placeholder={t('admin.placeholder_q', lang)} />
                   </div>
                   <div style={{ padding: '8px 12px', borderLeft: '1px solid var(--border)' }}>
-                    <EditableCell value={item.a} onChange={v => handleChangeCell(globalIdx, 'a', v)} multiline placeholder="Saisissez la réponse…" />
+                    <EditableCell value={item.a} onChange={v => handleChangeCell(globalIdx, 'a', v)} multiline placeholder={t('admin.placeholder_a', lang)} />
                   </div>
                   <div style={{ padding: '10px 12px', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', paddingTop: 13 }}>
                     {item.category
                       ? <CategoryBadge value={item.category} />
-                      : <EditableCell value={item.category} onChange={v => handleChangeCell(globalIdx, 'category', v)} placeholder="Catégorie…" />
+                      : <EditableCell value={item.category} onChange={v => handleChangeCell(globalIdx, 'category', v)} placeholder={t('admin.placeholder_cat', lang)} />
                     }
                   </div>
                   <div style={{ borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 13 }}>
@@ -215,7 +218,7 @@ export default function AdminPage({ context, setContext }) {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--indigo-lt)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <Plus size={14} /> Ajouter une ligne
+              <Plus size={14} /> {t('admin.add_row', lang)}
             </button>
 
             {/* Pagination */}
