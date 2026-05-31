@@ -254,7 +254,8 @@ if __name__ == "__main__":
             "hallucination_rate": avg(metrics["hallucinations"]),
             "consistency_score": round(consistency_score, 4),
             "response_length_moyen_chars": round(avg(metrics["response_lengths"]), 1)
-        }
+        },
+        "raw_metrics": metrics
     }
     
     print(json.dumps(results, indent=2, ensure_ascii=False))

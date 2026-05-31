@@ -2,21 +2,86 @@
   "approche": "B - Ollama + Cloudflare",
   "modele": "qwen2.5:1.5b",
   "quality": {
-    "bleu_moyen": 0.0062,
-    "rouge_l_moyen": 0.1138,
-    "f1_overlap_moyen": 0.1198,
+    "bleu_moyen": 0.0138,
+    "rouge_l_moyen": 0.1824,
+    "f1_overlap_moyen": 0.1673,
     "answer_relevance_rate": 1.0
   },
   "performance": {
-    "latence_moyenne_s": 5.5,
-    "ttft_moyen_s": 2.992,
-    "throughput_moyen_tok_s": 36.2,
-    "ram_usage_script_mb": 164.6,
+    "latence_moyenne_s": 4.04,
+    "ttft_moyen_s": 2.94,
+    "throughput_moyen_tok_s": 45.5,
+    "ram_usage_script_mb": 164.7,
     "rate_limit_success_rate": 0.0
   },
   "reliability": {
-    "hallucination_rate": 0.4,
-    "consistency_score": 0.2985,
-    "response_length_moyen_chars": 591.6
+    "hallucination_rate": 0.2,
+    "consistency_score": 0.3607,
+    "response_length_moyen_chars": 352
+  },
+  "raw_metrics": {
+    "latencies": [
+      3.9559483528137207,
+      3.4137299060821533,
+      3.6117489337921143,
+      5.732208490371704,
+      3.473768711090088
+    ],
+    "ttfts": [
+      3.6789634227752686,
+      2.7038490772247314,
+      3.086077928543091,
+      2.6514642238616943,
+      2.579854965209961
+    ],
+    "throughputs": [
+      43.32365662757939,
+      45.07798872594591,
+      43.75360210157364,
+      51.93550199518975,
+      43.628370387795634
+    ],
+    "bleu": [
+      0.0428361950754725,
+      0.007678432706586176,
+      0.008282282660969604,
+      0.0029834862420878116,
+      0.007094215779738816
+    ],
+    "rouge_l": [
+      0.3636363636363636,
+      0.23076923076923075,
+      0.05128205128205129,
+      0.0510204081632653,
+      0.2153846153846154
+    ],
+    "f1_overlap": [
+      0.3636363636363636,
+      0.15000000000000002,
+      0.06451612903225806,
+      0.07207207207207207,
+      0.18604651162790697
+    ],
+    "relevance": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "hallucinations": [
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    "response_lengths": [
+      68,
+      215,
+      156,
+      1046,
+      275
+    ]
   }
 }
