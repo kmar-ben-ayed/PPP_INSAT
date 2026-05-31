@@ -1,9 +1,22 @@
 {
   "approche": "B - Ollama + Cloudflare",
   "modele": "qwen2.5:1.5b",
-  "latence_moyenne": 5.19,
-  "latence_mediane": 4.2,
-  "latence_max": 8.46,
-  "bleu_moyen": 0.3492,
-  "rouge_l_moyen": 0.603
+  "quality": {
+    "bleu_moyen": 0.0062,
+    "rouge_l_moyen": 0.1138,
+    "f1_overlap_moyen": 0.1198,
+    "answer_relevance_rate": 1.0
+  },
+  "performance": {
+    "latence_moyenne_s": 5.5,
+    "ttft_moyen_s": 2.992,
+    "throughput_moyen_tok_s": 36.2,
+    "ram_usage_script_mb": 164.6,
+    "rate_limit_success_rate": 0.0
+  },
+  "reliability": {
+    "hallucination_rate": 0.4,
+    "consistency_score": 0.2985,
+    "response_length_moyen_chars": 591.6
+  }
 }
