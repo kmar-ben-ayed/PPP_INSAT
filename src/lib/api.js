@@ -113,6 +113,20 @@ export async function runBenchmark({
   context,
   consistency_runs = 2,
 }) {
+  if (approach === 'B') {
+    const faqText = (context.faq || [])
+      .map(item => `Q: ${item.q || item.question}\nR: ${item.a || item.reference_answer}`)
+      .join('\n\n')
+
+    const res = await fetch(`${getBase('B')}/benchmark`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dataset, context: faqText, approach, consistency_runs }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
   const res = await fetch(`${getBase(approach)}/benchmark`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
