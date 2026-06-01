@@ -1,7 +1,7 @@
 // All calls go through /api which Vite proxies to localhost:8000
 
 const BASE_URLS = {
-  A: import.meta.env.VITE_API_A || '/api',   // Membre 1 — HF Spaces
+  A: import.meta.env.VITE_API_A || '/api-a',   // Membre 1 — HF Spaces
   B: import.meta.env.VITE_API_B || '/api-b', // Membre 2 — Qwen + Ollama local
   C: import.meta.env.VITE_API_C || '/api-c',   // Membre 3 — Serverless HF
 }
@@ -134,4 +134,15 @@ export async function runBenchmark({
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+// GET /benchmark/latest
+export async function getLatestBenchmark(approach) {
+  try {
+    const res = await fetch(`${getBase(approach)}/benchmark/latest`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
