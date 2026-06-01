@@ -298,7 +298,7 @@ export const CATEGORIES = ['inscription', 'programme', 'logistique', 'opportunit
 export const APPROACH_CONFIG = {
   A: {
     label: "Hugging Face Spaces",
-    model: "Phi-3 Mini / SmolLM2",
+    model: "SmolLM2-1.7B-Instruct",
     color: "teal",
     desc: "CPU Cloud HF · zéro config serveur",
   },

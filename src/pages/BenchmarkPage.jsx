@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Play, Upload, XCircle, TrendingUp, Clock, Zap, ShieldCheck } from 'lucide-react'
-import { runBenchmark, getMetrics } from '../lib/api'
+import { runBenchmark, getMetrics, getLatestBenchmark } from '../lib/api'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
 import { APPROACH_CONFIG, loadContext } from '../lib/context'
 import faqData from '../data/faq.json'
@@ -73,6 +73,29 @@ export default function BenchmarkPage({ approach, lang  }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [dataset, setDataset] = useState(DEFAULT_DATASET)
+
+  useEffect(() => {
+    let active = true;
+    async function loadLatest() {
+      setLoading(true); setError(''); setResults(null); setMetrics(null);
+      try {
+        const [latest, met] = await Promise.all([
+          getLatestBenchmark(approach),
+          getMetrics(approach).catch(() => null)
+        ])
+        if (active && latest) {
+          setResults(latest)
+          setMetrics(met)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    loadLatest()
+    return () => { active = false }
+  }, [approach])
 
   async function handleRun() {
     setLoading(true); setError('')
