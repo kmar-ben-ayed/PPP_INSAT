@@ -1,0 +1,263 @@
+{
+  "approche": "C",
+  "modele": "",
+  "quality": {
+    "bleu_moyen": 0.9562,
+    "rouge_l_moyen": 1.0,
+    "f1_overlap_moyen": 0.9781,
+    "answer_relevance_rate": 1.0
+  },
+  "performance": {
+    "latence_moyenne_s": 0.01,
+    "ttft_moyen_s": 0.0,
+    "throughput_moyen_tok_s": 3327.2848,
+    "rate_limit_success_rate": 0.0
+  },
+  "reliability": {
+    "hallucination_rate": 0.0,
+    "consistency_score": 1.0,
+    "response_length_moyen_chars": 109.5,
+    "bleu": 0.9562,
+    "rouge_l": 1.0,
+    "contextual_relevance_rate": 1.0,
+    "lang_accuracy": 0.6,
+    "consistency_rate": 1.0,
+    "ttft_ms": 0.0,
+    "avg_latency_ms": 5.5,
+    "throughput_tokens_per_sec": 3327.2848,
+    "n": 10,
+    "total_time_ms": 55.0
+  },
+  "raw_metrics": {
+    "latencies": [
+      0.0038257999995039427,
+      0.0030280999999376945,
+      0.004432599999745435,
+      0.008159199999681732,
+      0.0031403999992107856,
+      0.00823450000007142,
+      0.0035747000001720153,
+      0.00753660000009404,
+      0.010026599999946484,
+      0.00304130000040459
+    ],
+    "ttfts": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "throughputs": [
+      6578.9474,
+      2666.6667,
+      681.8182,
+      1585.3659,
+      5161.2903,
+      1463.4146,
+      2222.2222,
+      5333.3333,
+      800.0,
+      9666.6667
+    ],
+    "bleu": [
+      1.0,
+      1.0,
+      0.5623413251903491,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rouge_l": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "f1_overlap": [
+      1.0,
+      1.0,
+      0.7812,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "relevance": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "hallucinations": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "response_lengths": [
+      191,
+      53,
+      19,
+      75,
+      91,
+      80,
+      53,
+      292,
+      53,
+      188
+    ]
+  },
+  "per_question": [
+    {
+      "name": "Q1",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 3.8,
+      "throughput": 6578.9474,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q2",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 3.0,
+      "throughput": 2666.6667,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q3",
+      "bleu": 0.5623,
+      "rouge_l": 1.0,
+      "f1": 0.7812,
+      "ttft_ms": 0.0,
+      "total_latency": 4.4,
+      "throughput": 681.8182,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q4",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 8.2,
+      "throughput": 1585.3659,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q5",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 3.1,
+      "throughput": 5161.2903,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q6",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 8.2,
+      "throughput": 1463.4146,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q7",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 3.6,
+      "throughput": 2222.2222,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q8",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 7.5,
+      "throughput": 5333.3333,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q9",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 10.0,
+      "throughput": 800.0,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    },
+    {
+      "name": "Q10",
+      "bleu": 1.0,
+      "rouge_l": 1.0,
+      "f1": 1.0,
+      "ttft_ms": 0.0,
+      "total_latency": 3.0,
+      "throughput": 9666.6667,
+      "out_of_scope": false,
+      "consistent": null,
+      "error": false
+    }
+  ]
+}
