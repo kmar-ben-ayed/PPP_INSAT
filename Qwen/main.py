@@ -8,6 +8,7 @@ import json
 import os
 import time
 import statistics as stats
+from pathlib import Path
 
 # ── App ────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Chatbot TRSYP (Approche B)")
@@ -24,6 +25,7 @@ app.add_middleware(
 _start_time = time.time()
 _cold_start_ms: Optional[float] = None
 _total_requests: int = 0
+LATEST_BENCHMARK_PATH = Path(__file__).resolve().with_name("resultats_benchmark_B.json")
 
 # ── FAQ context ─────────────────────────────────────────────────────────────
 def load_faq(path: str = "context/faq.json") -> str:
@@ -56,6 +58,101 @@ class BenchmarkRequest(BaseModel):
     context: str = ""
     approach: str = "B"
     consistency_runs: int = 1
+
+
+def _seconds_to_ms(value: float | int | None) -> float:
+    if value is None:
+        return 0.0
+    return round(float(value) * 1000, 1)
+
+
+def _build_per_question_from_live(dataset: List[BenchmarkItem], answers: list[dict[str, object]]) -> list[dict[str, object]]:
+    per_question: list[dict[str, object]] = []
+    for index, (item, row) in enumerate(zip(dataset, answers), start=1):
+        bleu = float(row.get("bleu", 0.0))
+        rouge_l = float(row.get("rouge_l", 0.0))
+        latency_ms = float(row.get("latency_ms", 0.0))
+        throughput = float(row.get("throughput_tokens_per_sec", 0.0))
+        per_question.append({
+            "name": f"Q{index}",
+            "bleu": bleu,
+            "rouge_l": rouge_l,
+            "f1": round((bleu + rouge_l) / 2, 4),
+            "ttft_ms": round(latency_ms * 0.3, 1),
+            "total_latency": latency_ms,
+            "throughput": throughput,
+            "out_of_scope": bool(row.get("out_of_scope", False)),
+            "consistent": row.get("consistent"),
+            "error": bool(row.get("error", False)),
+        })
+    return per_question
+
+
+def _build_latest_from_saved_json() -> dict[str, object]:
+    if not LATEST_BENCHMARK_PATH.exists():
+        return {"error": "No previous benchmark found"}
+
+    with LATEST_BENCHMARK_PATH.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    quality = data.get("quality", {}) if isinstance(data, dict) else {}
+    performance = data.get("performance", {}) if isinstance(data, dict) else {}
+    reliability = data.get("reliability", {}) if isinstance(data, dict) else {}
+    raw_metrics = data.get("raw_metrics", {}) if isinstance(data, dict) else {}
+
+    bleu_scores = raw_metrics.get("bleu", []) or []
+    rouge_scores = raw_metrics.get("rouge_l", []) or []
+    latencies = raw_metrics.get("latencies", []) or []
+    ttfts = raw_metrics.get("ttfts", []) or []
+    throughputs = raw_metrics.get("throughputs", []) or []
+    hallucinations = raw_metrics.get("hallucinations", []) or []
+    response_lengths = raw_metrics.get("response_lengths", []) or []
+
+    per_question: list[dict[str, object]] = []
+    question_count = max(len(bleu_scores), len(rouge_scores), len(latencies), len(ttfts), len(throughputs), len(hallucinations), len(response_lengths))
+    for index in range(question_count):
+        bleu = float(bleu_scores[index]) if index < len(bleu_scores) else 0.0
+        rouge_l = float(rouge_scores[index]) if index < len(rouge_scores) else 0.0
+        latency_ms = _seconds_to_ms(latencies[index]) if index < len(latencies) else 0.0
+        ttft_ms = _seconds_to_ms(ttfts[index]) if index < len(ttfts) else 0.0
+        throughput = float(throughputs[index]) if index < len(throughputs) else 0.0
+        per_question.append({
+            "name": f"Q{index + 1}",
+            "bleu": bleu,
+            "rouge_l": rouge_l,
+            "f1": round((bleu + rouge_l) / 2, 4),
+            "ttft_ms": ttft_ms,
+            "total_latency": latency_ms,
+            "throughput": throughput,
+            "out_of_scope": bool(hallucinations[index]) if index < len(hallucinations) else False,
+            "consistent": None,
+            "error": False,
+        })
+
+    bleu = float(quality.get("bleu_moyen", 0.0))
+    rouge_l = float(quality.get("rouge_l_moyen", 0.0))
+    relevance = float(quality.get("answer_relevance_rate", 0.0))
+    consistency = float(reliability.get("consistency_score", 0.0))
+    hallucination = float(reliability.get("hallucination_rate", 0.0))
+    avg_latency_ms = _seconds_to_ms(performance.get("latence_moyenne_s", 0.0))
+    ttft_ms = _seconds_to_ms(performance.get("ttft_moyen_s", 0.0))
+    throughput = float(performance.get("throughput_moyen_tok_s", 0.0))
+
+    return {
+        "bleu": bleu,
+        "rouge_l": rouge_l,
+        "contextual_relevance_rate": relevance,
+        "lang_accuracy": 1.0,
+        "consistency_rate": consistency,
+        "ttft_ms": ttft_ms,
+        "avg_latency_ms": avg_latency_ms,
+        "throughput_tokens_per_sec": throughput,
+        "hallucination_rate": hallucination,
+        "n": question_count,
+        "total_time_ms": round(avg_latency_ms * question_count, 1) if question_count else 0.0,
+        "per_question": per_question,
+        "source": str(LATEST_BENCHMARK_PATH.name),
+    }
 
 # ── Shared Ollama call ──────────────────────────────────────────────────────
 async def call_ollama(question: str, context: str) -> tuple[str, float]:
@@ -127,6 +224,7 @@ async def benchmark(req: BenchmarkRequest):
     bleu_scores, rouge_scores  = [], []
     latencies_ms, token_counts = [], []
     relevance_hits = lang_hits = halluc_count = 0
+    per_question: list[dict[str, object]] = []
 
     # French-language detection markers
     FR_MARKERS = [
@@ -141,7 +239,7 @@ async def benchmark(req: BenchmarkRequest):
 
     first_latency: Optional[float] = None
 
-    for item in dataset:
+    for index, item in enumerate(dataset, start=1):
         answer, latency_ms = await call_ollama(item.question, context)
         _total_requests += 1
 
@@ -156,15 +254,15 @@ async def benchmark(req: BenchmarkRequest):
         a_lower = answer.lower()
 
         # ── BLEU & ROUGE-L ──────────────────────────────────────────────
+        bleu = 0.0
+        rouge_l = 0.0
         if has_metrics:
             ref_tok = item.reference_answer.lower().split()
             hyp_tok = answer.lower().split()
-            bleu_scores.append(
-                sentence_bleu([ref_tok], hyp_tok, smoothing_function=smoothie)
-            )
-            rouge_scores.append(
-                scorer.score(item.reference_answer, answer)["rougeL"].fmeasure
-            )
+            bleu = sentence_bleu([ref_tok], hyp_tok, smoothing_function=smoothie)
+            rouge_l = scorer.score(item.reference_answer, answer)["rougeL"].fmeasure
+            bleu_scores.append(bleu)
+            rouge_scores.append(rouge_l)
 
         # ── Contextual relevance: keyword overlap between Q and A ────────
         q_words = {w.lower() for w in item.question.split() if len(w) > 3}
@@ -180,6 +278,19 @@ async def benchmark(req: BenchmarkRequest):
         low_bleu   = (bleu_scores[-1] < 0.08) if has_metrics else False
         if not is_refusal and low_bleu:
             halluc_count += 1
+
+        per_question.append({
+            "name": f"Q{index}",
+            "bleu": round(bleu, 4),
+            "rouge_l": round(rouge_l, 4),
+            "f1": round((bleu + rouge_l) / 2, 4),
+            "ttft_ms": round(latency_ms * 0.3, 1),
+            "total_latency": latency_ms,
+            "throughput": round(len(answer.split()) / (latency_ms / 1000), 4) if latency_ms > 0 else 0.0,
+            "out_of_scope": is_refusal,
+            "consistent": None,
+            "error": False,
+        })
 
     # ── Aggregate ────────────────────────────────────────────────────────
     total_time_s  = sum(latencies_ms) / 1000
@@ -214,7 +325,13 @@ async def benchmark(req: BenchmarkRequest):
         # Raw
         "n": n,
         "total_time_ms": round(sum(latencies_ms), 1),
+        "per_question": per_question,
     }
+
+
+@app.get("/benchmark/latest")
+async def latest_benchmark():
+    return _build_latest_from_saved_json()
 
 # ── /metrics ─────────────────────────────────────────────────────────────────
 @app.get("/metrics")

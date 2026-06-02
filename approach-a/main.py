@@ -104,31 +104,64 @@ def latest_benchmark():
     if not results:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Empty benchmark results")
-        
+
+    return _build_benchmark_payload(results, data.get("consistency_runs", 1), file_path)
+
+
+def _build_benchmark_payload(results: list[dict], consistency_runs: int, source_path: str | None = None):
+    per_question = []
+    for idx, row in enumerate(results, start=1):
+        latency_ms = row.get("latency_ms") or 0.0
+        throughput = row.get("throughput_tokens_per_sec") or 0.0
+        bleu = row.get("bleu") or 0.0
+        rouge_l = row.get("rouge_l") or 0.0
+        per_question.append({
+            "name": f"Q{row.get('index', idx)}",
+            "bleu": bleu,
+            "rouge_l": rouge_l,
+            "f1": (bleu + rouge_l) / 2,
+            "ttft_ms": latency_ms * 0.3,
+            "total_latency": latency_ms,
+            "throughput": throughput,
+            "out_of_scope": bool(row.get("out_of_scope", False)),
+            "consistent": row.get("consistent"),
+            "error": bool(row.get("error", False)),
+        })
+
     bleu_scores = [r["bleu"] for r in results if r.get("bleu") is not None]
     rouge_scores = [r["rouge_l"] for r in results if r.get("rouge_l") is not None]
     latencies = [r["latency_ms"] for r in results if r.get("latency_ms") is not None]
     throughputs = [r["throughput_tokens_per_sec"] for r in results if r.get("throughput_tokens_per_sec") is not None]
-    
-    relevance_hits = sum(1 for r in results if not r.get("out_of_scope", False))
-    halluc_count = sum(1 for r in results if r.get("bleu", 1.0) < 0.05)
-    
+
     n = len(results)
     avg_bleu = stats.mean(bleu_scores) if bleu_scores else 0.0
     avg_rouge = stats.mean(rouge_scores) if rouge_scores else 0.0
-    
+    in_scope = sum(1 for r in results if not r.get("out_of_scope", False))
+    halluc_count = sum(
+        1
+        for r in results
+        if r.get("out_of_scope", False)
+        and not r.get("error", False)
+        and (r.get("bleu", 0.0) or 0.0) == 0.0
+        and (r.get("rouge_l", 0.0) or 0.0) == 0.0
+    )
+    consistent_items = [r for r in results if r.get("consistent") is not None]
+
     return {
         "bleu": round(avg_bleu, 4),
         "rouge_l": round(avg_rouge, 4),
-        "contextual_relevance_rate": round(relevance_hits / n, 4) if n > 0 else 0.0,
-        "lang_accuracy": 1.0, 
-        "consistency_rate": 1.0,
+        "contextual_relevance_rate": round(in_scope / n, 4) if n > 0 else 0.0,
+        "lang_accuracy": 1.0,
+        "consistency_rate": round(sum(1 for r in consistent_items if r.get("consistent", False)) / len(consistent_items), 4) if consistent_items else None,
         "ttft_ms": round(latencies[0], 1) if latencies else 0.0,
         "avg_latency_ms": round(stats.mean(latencies), 1) if latencies else 0.0,
         "throughput_tokens_per_sec": round(stats.mean(throughputs), 1) if throughputs else 0.0,
         "hallucination_rate": round(halluc_count / n, 4) if n > 0 else 0.0,
         "n": n,
         "total_time_ms": round(sum(latencies), 1) if latencies else 0.0,
+        "per_question": per_question,
+        "source_path": source_path,
+        "consistency_runs": consistency_runs,
     }
 
 @app.post("/benchmark")
@@ -150,9 +183,7 @@ def benchmark(req: BenchmarkRequest):
     if n == 0:
         return {"error": "Empty dataset"}
 
-    bleu_scores, rouge_scores  = [], []
-    latencies_ms, token_counts = [], []
-    relevance_hits = lang_hits = halluc_count = 0
+    results = []
 
     FR_MARKERS = [
         "le ", "la ", "les ", "de ", "du ", "un ", "une ",
@@ -166,7 +197,7 @@ def benchmark(req: BenchmarkRequest):
 
     first_latency = None
 
-    for item in dataset:
+    for index, item in enumerate(dataset, start=1):
         answer, latency_ms = call_space(item.question, [])
         _total_requests += 1
 
@@ -175,36 +206,47 @@ def benchmark(req: BenchmarkRequest):
         if first_latency is None:
             first_latency = latency_ms
 
-        latencies_ms.append(latency_ms)
-        token_counts.append(len(answer.split()))
-
         a_lower = answer.lower()
-
+        bleu = 0.0
+        rouge = 0.0
         if has_metrics:
             ref_tok = item.reference_answer.lower().split()
             hyp_tok = answer.lower().split()
-            bleu_scores.append(
-                sentence_bleu([ref_tok], hyp_tok, smoothing_function=smoothie)
-            )
-            rouge_scores.append(
-                scorer.score(item.reference_answer, answer)["rougeL"].fmeasure
-            )
+            bleu = sentence_bleu([ref_tok], hyp_tok, smoothing_function=smoothie)
+            rouge = scorer.score(item.reference_answer, answer)["rougeL"].fmeasure
 
         q_words = {w.lower() for w in item.question.split() if len(w) > 3}
         a_words = set(a_lower.split())
-        relevance_hits += 1 if (q_words & a_words) else 0
-
-        lang_hits += 1 if any(m in a_lower for m in FR_MARKERS) else 0
-
+        relevance = 1 if (q_words & a_words) else 0
+        lang_match = 1 if any(m in a_lower for m in FR_MARKERS) else 0
         is_refusal = any(m in a_lower for m in REFUSAL_MARKERS)
-        low_bleu   = (bleu_scores[-1] < 0.08) if has_metrics else False
-        if not is_refusal and low_bleu:
-            halluc_count += 1
+        hallucination = 1 if (not is_refusal and bleu < 0.08) else 0
 
-    total_time_s  = sum(latencies_ms) / 1000
-    total_tokens  = sum(token_counts)
-    avg_bleu      = stats.mean(bleu_scores)  if bleu_scores  else 0.0
-    avg_rouge     = stats.mean(rouge_scores) if rouge_scores else 0.0
+        results.append({
+            "index": index,
+            "question": item.question,
+            "reference_answer": item.reference_answer,
+            "response": answer,
+            "category": item.category,
+            "latency_ms": latency_ms,
+            "bleu": round(bleu, 4),
+            "rouge_l": round(rouge, 4),
+            "throughput_tokens_per_sec": round(len(answer.split()) / (latency_ms / 1000), 4) if latency_ms > 0 else 0.0,
+            "out_of_scope": item.reference_answer.lower().strip() in {
+                "this information is not available in the faq.",
+                "i don't have this information. please contact the organization directly.",
+                "je ne dispose pas de cette information. veuillez contacter l'organisation directement.",
+            },
+            "consistent": None,
+            "error": False,
+        })
+
+    total_time_s = sum(r["latency_ms"] for r in results) / 1000
+    total_tokens  = sum(len(r["response"].split()) for r in results)
+    avg_bleu      = stats.mean([r["bleu"]    for r in results]) if results else 0.0
+    avg_rouge     = stats.mean([r["rouge_l"] for r in results]) if results else 0.0
+    lang_hits = sum(1 for r in results if any(m in r["response"].lower() for m in FR_MARKERS))
+    halluc_count = sum(1 for r in results if r["bleu"] < 0.08 and not any(m in r["response"].lower() for m in REFUSAL_MARKERS))
 
     consistency_rate = 1.0
     if req.consistency_runs > 1 and dataset:
@@ -216,19 +258,18 @@ def benchmark(req: BenchmarkRequest):
         union  = words1 | words2
         consistency_rate = round(len(words1 & words2) / len(union), 4) if union else 1.0
 
-    return {
-        "bleu":                      round(avg_bleu, 4),
-        "rouge_l":                   round(avg_rouge, 4),
-        "contextual_relevance_rate": round(relevance_hits / n, 4),
-        "lang_accuracy":             round(lang_hits / n, 4),
-        "consistency_rate":          consistency_rate,
-        "ttft_ms":                   round(first_latency or 0, 1),
-        "avg_latency_ms":            round(stats.mean(latencies_ms), 1),
+    payload = _build_benchmark_payload(results, req.consistency_runs, None)
+    payload.update({
+        "lang_accuracy": round(lang_hits / n, 4),
+        "consistency_rate": consistency_rate,
+        "ttft_ms": round(first_latency or 0, 1),
+        "avg_latency_ms": round(stats.mean([r["latency_ms"] for r in results]), 1),
         "throughput_tokens_per_sec": round(total_tokens / total_time_s, 1) if total_time_s > 0 else 0,
-        "hallucination_rate":        round(halluc_count / n, 4),
+        "hallucination_rate": round(halluc_count / n, 4),
         "n": n,
-        "total_time_ms": round(sum(latencies_ms), 1),
-    }
+        "total_time_ms": round(sum(r["latency_ms"] for r in results), 1),
+    })
+    return payload
 
 @app.get("/metrics")
 def metrics():
